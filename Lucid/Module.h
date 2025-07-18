@@ -1,6 +1,6 @@
 #pragma once
 
-#include <string>
+#include <jni.h>
 #include <Windows.h>
 
 class Module
@@ -11,15 +11,16 @@ private:
 protected:
 	bool toggled;
 	DWORD keybind;
-	std::string name;
+	jstring name;
 
 public:
-	Module(const std::string& name, DWORD keybind) : name(name), keybind(keybind), key_was_down(false), toggled(false) {}
+	Module(const jstring& name, DWORD keybind) : name(name), keybind(keybind), key_was_down(false), toggled(false) {}
 
 	bool IsToggled() const { return toggled; }
 	void Toggle() { toggled = !toggled; }
 
 	DWORD GetKeybind() const { return keybind; }
+	jstring GetName() const { return name; }
 
 	virtual void OnUpdate() { }
 

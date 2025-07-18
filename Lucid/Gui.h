@@ -15,5 +15,5 @@ private:
 
 public:
 	Gui();
-	void Test();
+	void Render();
 };

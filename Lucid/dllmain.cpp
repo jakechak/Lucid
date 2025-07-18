@@ -2,12 +2,11 @@
 #include <Windows.h>        
 #include <jni.h>          
 #include <chrono>
-#include <vector>
 #include <memory>
 
 #include "MinHook.h"
 
-#include "Minecraft.h"
+#include "Client.h"
 #include "Module.h"
 #include "Reach.h"
 #include "Autoclicker.h"
@@ -17,8 +16,6 @@
 typedef BOOL(WINAPI* SwapBuffers_t)(HDC hdc);
 // Function pointer to hold the original SwapBuffers function
 SwapBuffers_t SwapBuffersDefault = nullptr;
-
-std::vector<std::unique_ptr<Module>> modules;
 
 std::unique_ptr<Gui> gui;
 
@@ -33,19 +30,20 @@ BOOL WINAPI SwapBuffersOverride(HDC hdc)
 
     if (elapsed.count() < 50)
     {
-        gui->Test();
+        gui->Render();
         return SwapBuffersDefault(hdc);
     }
 
-   if (Minecraft::jvm->GetEnv((void**)&Minecraft::env, JNI_VERSION_1_6) != JNI_OK)
-        Minecraft::jvm->AttachCurrentThread((void**)&Minecraft::env, nullptr);
+   if (Client::jvm->GetEnv((void**)&Client::env, JNI_VERSION_1_6) != JNI_OK)
+        Client::jvm->AttachCurrentThread((void**)&Client::env, nullptr);
 
-    for (std::unique_ptr<Module>& m : modules)
+   //Might just throw this in a client function "Update"
+    for (std::unique_ptr<Module>& m : Client::modules)
     {
         m->ListenForKeyPress();
         m->OnUpdate();
     }
-    gui->Test();
+    gui->Render();
     last_run = now;
 
     // Call the original SwapBuffers so the game continues rendering
@@ -73,16 +71,14 @@ DWORD WINAPI MainThread(HMODULE hModule)
         return 1;
 
     //Fetches the JVM - assuming only 1
-    if (JNI_GetCreatedJavaVMs(&Minecraft::jvm, 1, nullptr) != JNI_OK || Minecraft::jvm == nullptr)
+    if (JNI_GetCreatedJavaVMs(&Client::jvm, 1, nullptr) != JNI_OK || Client::jvm == nullptr)
         return 1;
 
     //Attaches our current thread to the JVM - we can now use JNI
-    if (Minecraft::jvm->AttachCurrentThread((void**)&Minecraft::env, nullptr) != JNI_OK || Minecraft::env == nullptr)
+    if (Client::jvm->AttachCurrentThread((void**)&Client::env, nullptr) != JNI_OK || Client::env == nullptr)
         return 1;
 
-    Minecraft::Init();
-    modules.push_back(std::make_unique<Reach>());
-    modules.push_back(std::make_unique<Autoclicker>());
+    Client::Init();
 
     gui = std::make_unique<Gui>();
 

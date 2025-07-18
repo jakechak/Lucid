@@ -4,11 +4,11 @@
 #include <cstdlib>
 #include <ctime>
 
-#include "Minecraft.h"
+#include "Client.h"
 
-Autoclicker::Autoclicker() : Module("Autoclicker", 0x58)
+Autoclicker::Autoclicker() : Module(Client::env->NewStringUTF("Autoclicker"), 0x58)
 {
-	ClickMouse = Minecraft::env->GetMethodID(Minecraft::mc_class, "aw", "()V");
+	ClickMouse = Client::env->GetMethodID(Client::mc_class, "aw", "()V");
 	std::srand(time(0));
 }
 
@@ -21,5 +21,5 @@ void Autoclicker::OnUpdate()
 	if (std::rand() % 10 > 6)
 		return;
 
-	Minecraft::env->CallVoidMethod(Minecraft::mc_inst, ClickMouse);
+	Client::env->CallVoidMethod(Client::mc_inst, ClickMouse);
 }
